@@ -164,6 +164,8 @@ function calculateTradeTotal() {
     var totalTrade = markPrice * parseInt(tradeVolEL.val());
     var totalMargin = parseFloat(totalMarginEquityEL.text().replace(/,/g, ''))
 
+    alert(totalTrade + " | " + totalMargin)
+
     if (totalTrade > totalMargin) {
         tradeVolEL.val(0).change();
         let maksimal = Math.floor(totalMargin / markPrice);
