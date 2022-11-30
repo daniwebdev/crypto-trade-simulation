@@ -5,6 +5,10 @@ var totalMarginEquity = 0;
 var tradeActive = [];
 var tradeHistory = {};
 var countRequest = 0;
+var buyPrice = 0;
+var sellPrice = 0;
+var buySpread = 0.3;
+var sellSpread = 0.2;
 
 var totalMarginEquityEL = $('#total-margin-equity');
 var leverageEL = $('#trade-leverage');
@@ -82,13 +86,19 @@ function connect() {
 
 $(function () {
     // connect();
+    let initialMarkPrice = 50;
+    buyPrice = initialMarkPrice + buySpread;
+    sellPrice = initialMarkPrice - sellSpread;
 
-    $('#markPrice').text(50)
+    $('#markPrice').text(50);
+    $('#buyPrice').text(initialMarkPrice + buySpread);
+    $('#sellPrice').text(initialMarkPrice - sellSpread);
 
     $('#markPrice').on('click', function () {
         $('#markPriceInput').show();
         $(this).hide();
-    })
+    });
+
     $('#markPriceInput').on('change', function () {
         $('#markPrice').show();
         $(this).hide();
@@ -109,6 +119,13 @@ $(function () {
 function onMarkPriceChange(markPrice) {
 
     document.querySelector('#markPrice').innerHTML = markPrice ?? 0;
+
+
+    buyPrice  = parseFloat(markPrice) + buySpread;
+    sellPrice = parseFloat(markPrice) - sellSpread;
+
+    $('#buyPrice').text(buyPrice);
+    $('#sellPrice').text(sellPrice);
 
     let markActiveTrade = [];
 
@@ -150,7 +167,7 @@ function onMarkPriceChange(markPrice) {
 function calculateMarginEquity() {
     var _saldoDeposit = parseFloat($('#saldo').text());
     var _leverage = parseInt($('#trade-leverage').val());
-    var _marginEquity = _saldoDeposit * _leverage;
+    var _marginEquity = (_saldoDeposit * _leverage)- (tradeActive.map(x => x.totalEntryPrice).reduce((a, b) => a+b, 0));
 
     totalMarginEquity = _marginEquity;
 
@@ -194,18 +211,20 @@ function tradeActionBuySell(__type) {
         return false;
     }
 
+    let markPrice = __type == 'buy' ? buyPrice:sellPrice;
+
     let tradeData = {
         type: __type,
         leverage: leverageEL.val(),
         volume: tradeVolEL.val(),
-        entryPrice: markPriceEL.text(),
-        totalEntryPrice: parseFloat(markPriceEL.text()) * parseInt(tradeVolEL.val()),
+        entryPrice: markPrice,
+        totalEntryPrice: parseFloat(markPrice) * parseInt(tradeVolEL.val()),
         change: 0,
         changePercent: 0,
         pnl: 0,
         pnlPercent: 0,
 
-        entryPriceAcc: parseFloat(markPriceEL.text()),
+        entryPriceAcc: parseFloat(markPrice),
         entryPriceAccCount: 0,
     }
 
@@ -258,6 +277,8 @@ function tradeActionBuySell(__type) {
 
 
     renderTradeActive();
+
+    calculateMarginEquity();
 
     leverageEL.val('')
     tradeVolEL.val(0)
@@ -336,7 +357,7 @@ function renderTradeActive() {
                                     <h5>Vol: <span class="volume block text-base">${trade.volume}</span></h5>
                                     <h5>Leverage: <span class="leverage block text-base">${trade.leverage}</span></h5>
                                     <h5>Entry Price: <span class="entryPrice block text-base">${parseFloat(trade.entryPrice).toFixed(2)}</span></h5>
-                                    <h5>Total Entry: <span class="entryPrice block text-base">$${trade.totalEntryPrice}</span></h5>
+                                    <h5>Total Entry: <span class="entryPrice block text-base">$${parseFloat(trade.totalEntryPrice).toFixed(2)}</span></h5>
                                     <h5>PNL: <span class="entryPrice block text-base">${trade.pnl.toFixed(2)}</span></h5>
                                 </div>
                             </div>
