@@ -357,6 +357,7 @@ function renderTradeActive() {
                                     <h5>Leverage: <span class="leverage block text-base">${trade.leverage}</span></h5>
                                     <h5>PNL: <span class="entryPrice block text-base">${trade.pnl.toFixed(2)}</span></h5>
                                 </div>
+
                                 <div class="flex gap-3 text-xs">
                                     <h5>Entry Price: <span class="entryPrice block text-base">${parseFloat(trade.entryPrice).toFixed(2)}</span></h5>
                                     <h5>Total Entry: <span class="entryPrice block text-base">$${parseFloat(trade.totalEntryPrice).toFixed(2)}</span></h5>
