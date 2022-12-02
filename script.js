@@ -155,6 +155,8 @@ function onMarkPriceChange(markPrice) {
     if((balance + sumPNL) <= 0) {
         tradeActive = [];
         alert("Saldo tidak cukup, auto liquid");
+
+        $('#saldo').text('0')
     } else {
         tradeActive = markActiveTrade;
     }
