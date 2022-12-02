@@ -7,7 +7,7 @@ var tradeHistory = {};
 var countRequest = 0;
 var buyPrice = 0;
 var sellPrice = 0;
-var buySpread = 0.3;
+var buySpread = 0;
 var sellSpread = 0.2;
 
 var totalMarginEquityEL = $('#total-margin-equity');
@@ -131,27 +131,33 @@ function onMarkPriceChange(markPrice) {
 
     let sumPNL = 0;
 
-    for (let activeTrade of tradeActive) {
+    // calculation average and PNL
+    for (let _activeTrade of tradeActive) {
 
-        if (activeTrade.type == 'buy') {
-            activeTrade.change = markPrice - activeTrade.entryPrice;
-            activeTrade.changePercent = activeTrade.change / activeTrade.entryPrice
+        if (_activeTrade.type == 'buy') {
+            _activeTrade.change = markPrice - _activeTrade.entryPrice;
+            _activeTrade.changePercent = _activeTrade.change / _activeTrade.entryPrice
         } else {
-            activeTrade.change = activeTrade.entryPrice - markPrice;
-            activeTrade.changePercent = activeTrade.change / activeTrade.entryPrice
+            _activeTrade.change = _activeTrade.entryPrice - markPrice;
+            _activeTrade.changePercent = _activeTrade.change / _activeTrade.entryPrice
         }
 
-        activeTrade.pnlPercent = activeTrade.changePercent;
-        activeTrade.pnl = activeTrade.totalEntryPrice * activeTrade.pnlPercent
+        _activeTrade.pnlPercent = _activeTrade.changePercent;
+        _activeTrade.pnl = _activeTrade.totalEntryPrice * _activeTrade.pnlPercent
 
-        sumPNL += activeTrade.pnl;
+        sumPNL += _activeTrade.pnl;
 
-        markActiveTrade.push(activeTrade);
+        markActiveTrade.push(_activeTrade);
     }
 
     $('#balance-equity').text((balance + sumPNL).toFixed(2))
-
-    activeTrade = markActiveTrade;
+    console.log('balance ',(balance + sumPNL));
+    if((balance + sumPNL) <= 0) {
+        tradeActive = [];
+        alert("Saldo tidak cukup, auto liquid");
+    } else {
+        tradeActive = markActiveTrade;
+    }
 
     renderTradeActive();
 
@@ -212,6 +218,7 @@ function tradeActionBuySell(__type) {
     }
 
     let markPrice = __type == 'buy' ? buyPrice:sellPrice;
+    let balance = parseFloat($('#balance-equity').text())/parseInt(tradeVolEL.val());
 
     let tradeData = {
         type: __type,
@@ -226,6 +233,8 @@ function tradeActionBuySell(__type) {
 
         entryPriceAcc: parseFloat(markPrice),
         entryPriceAccCount: 0,
+
+        liqPrice: (parseFloat(markPrice) - balance),
     }
 
     // console.log('BEFORE', tradeHistory, tradeData);
@@ -245,17 +254,7 @@ function tradeActionBuySell(__type) {
             return parseFloat(acc) + parseFloat(curr)
         }, 0) / tradeHistory[__type].length
 
-        // console.log(averageEntryPrice.toFixed(2));
-
         let activeFilteredTradeData = activeFiltered[0];
-        // // let tradeHistoryFiltered    = tradeHistory.filter(x => x.type == __type);
-
-        // /* calculate the average */
-        // // var historyAverage = tradeHistory[__type].reduce((acc, next) => {
-        // //     return acc + parseFloat(next.entryPrice)
-        // // });
-
-        // console.log('AFTER', tradeHistory[__type])
 
         activeFilteredTradeData.entryPrice = averageEntryPrice.toFixed(2)
         activeFilteredTradeData.volume = parseInt(activeFilteredTradeData.volume) + parseInt(tradeData.volume);
@@ -356,10 +355,14 @@ function renderTradeActive() {
                                 <div class="flex gap-3 text-xs">
                                     <h5>Vol: <span class="volume block text-base">${trade.volume}</span></h5>
                                     <h5>Leverage: <span class="leverage block text-base">${trade.leverage}</span></h5>
-                                    <h5>Entry Price: <span class="entryPrice block text-base">${parseFloat(trade.entryPrice).toFixed(2)}</span></h5>
-                                    <h5>Total Entry: <span class="entryPrice block text-base">$${parseFloat(trade.totalEntryPrice).toFixed(2)}</span></h5>
                                     <h5>PNL: <span class="entryPrice block text-base">${trade.pnl.toFixed(2)}</span></h5>
                                 </div>
+                                <div class="flex gap-3 text-xs">
+                                    <h5>Entry Price: <span class="entryPrice block text-base">${parseFloat(trade.entryPrice).toFixed(2)}</span></h5>
+                                    <h5>Total Entry: <span class="entryPrice block text-base">$${parseFloat(trade.totalEntryPrice).toFixed(2)}</span></h5>
+                                    <h5>Liq. Price: <span class="volume block text-base">${trade.liqPrice}</span></h5>
+                                </div>
+
                             </div>
 
                             <div class="text-right flex flex-col justify-center">
