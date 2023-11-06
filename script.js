@@ -85,7 +85,7 @@ function connect() {
 }
 
 $(function () {
-    // connect();
+    connect();
     let initialMarkPrice = 50;
     buyPrice = initialMarkPrice + buySpread;
     sellPrice = initialMarkPrice - sellSpread;
